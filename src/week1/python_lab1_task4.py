@@ -1,86 +1,75 @@
-"""
-Task 4 – Text-based Arithmetic Analyzer
----------------------------------------
-Create a text-based analyzer made of small helper functions.
-
-Rules used by all functions:
-- Words are pieces of text separated by whitespace (use .split()).
-- A NUMBER is a word that is a whole integer, optionally with a leading
-  minus sign, e.g. "7", "42", "-3".
-  Punctuation at the end of a word is ignored, so "5," "10." "8!" count
-  as 5, 10 and 8. Use word.rstrip(".,!?;:") to remove it.
-  Decimals ("3.5") and mixed words ("abc123") are NOT numbers.
-- You do not need the `re` module; .split(), .rstrip() and .isdigit()
-  are enough.
-
-Helper functions:
-- count_characters(text) -> int    : characters that are not whitespace
-- count_words(text)      -> int    : number of words
-- extract_numbers(text)  -> list   : list of ints, in the order they appear
-- analyze_text(text)     -> dict   : combines the helpers (see below)
-
-analyze_text() returns a dict with exactly these keys:
-    "characters" : int   (from count_characters)
-    "words"      : int   (from count_words)
-    "numbers"    : list  (from extract_numbers)
-    "sum"        : int   (sum of the numbers, 0 if there are none)
-    "average"    : float (average of the numbers, 0.0 if there are none,
-                          NOT rounded)
-
-In the main block: read a line of text, call analyze_text(), and print a
-summary. Round the average to 2 decimals when printing.
-
-Example run:
-    Enter text: I have 3 apples and 5 pears
-    Characters (no spaces): 21
-    Words: 7
-    Numbers: [3, 5]
-    Sum: 8
-    Average: 4.00
-
-Examples (these are also used to check your work):
->>> count_characters("a b  c")
-3
->>> count_words("I have 3 apples and 5 pears")
-7
->>> extract_numbers("Scores: 10, -4 and 7! but not 3.5 or abc123")
-[10, -4, 7]
->>> result = analyze_text("I have 3 apples and 5 pears")
->>> result["characters"], result["words"], result["numbers"]
-(21, 7, [3, 5])
->>> result["sum"], result["average"]
-(8, 4.0)
->>> analyze_text("no numbers here")["average"]
-0.0
-"""
+OPERATORS = "+-*/"
 
 
-def count_characters(text: str) -> int:
-    """Count characters that are not whitespace."""
-    # TODO: implement
-    raise NotImplementedError("count_characters() is not implemented yet")
+def is_number(token):
+    """Return True if token can be read as a number.
+
+    >>> is_number("3.5")
+    True
+    >>> is_number("+")
+    False
+    """
+    try:
+        float(token)
+        return True
+    except ValueError:
+        return False
 
 
-def count_words(text: str) -> int:
-    """Count number of whitespace-separated words."""
-    # TODO: implement
-    raise NotImplementedError("count_words() is not implemented yet")
+def extract_numbers(text):
+    """Return all numbers in the text as floats.
+
+    >>> extract_numbers("3 + 4 * 2")
+    [3.0, 4.0, 2.0]
+    """
+    return [float(t) for t in text.split() if is_number(t)]
 
 
-def extract_numbers(text: str) -> list[int]:
-    """Return a list of the integers found in text, in order."""
-    # TODO: implement
-    raise NotImplementedError("extract_numbers() is not implemented yet")
+def extract_operators(text):
+    """Return all operators in the text.
+
+    >>> extract_operators("3 + 4 * 2")
+    ['+', '*']
+    """
+    return [t for t in text.split() if len(t) == 1 and t in OPERATORS]
 
 
-def analyze_text(text: str) -> dict:
-    """Return a dict with characters, words, numbers, sum and average."""
-    # TODO: call the helper functions and compute sum and average
-    raise NotImplementedError("analyze_text() is not implemented yet")
+def apply_operator(a, op, b):
+    """Apply one operator. Division by zero returns None.
+
+    >>> apply_operator(6, "/", 3)
+    2.0
+    >>> apply_operator(1, "/", 0) is None
+    True
+    """
+    if op == "+":
+        return a + b
+    if op == "-":
+        return a - b
+    if op == "*":
+        return a * b
+    if op == "/":
+        return a / b if b != 0 else None
+    raise ValueError(f"Unknown operator: {op}")
+
+
+def analyze_text(text):
+    """Analyze an arithmetic text, evaluating left to right.
+
+    >>> analyze_text("3 + 4 * 2")
+    {'numbers': [3.0, 4.0, 2.0], 'operators': ['+', '*'], 'result': 14.0}
+    >>> analyze_text("")
+    {'numbers': [], 'operators': [], 'result': None}
+    """
+    numbers = extract_numbers(text)
+    operators = extract_operators(text)
+    result = numbers[0] if numbers else None
+    for op, n in zip(operators, numbers[1:]):
+        if result is None:
+            break
+        result = apply_operator(result, op, n)
+    return {"numbers": numbers, "operators": operators, "result": result}
 
 
 if __name__ == "__main__":
-    # Keep all input() calls inside this block, otherwise the autograder
-    # cannot import your file.
-    # TODO: read input, call analyze_text(), and print results
-    pass
+    print(analyze_text(input("Expression (space separated): ")))
